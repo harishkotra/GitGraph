@@ -14,6 +14,15 @@ export const ShareableCard: React.FC<ShareableCardProps> = ({ user, profile }) =
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
+    
+    // Track download event
+    if (typeof window.gtag === 'function') {
+        window.gtag('event', 'download_card', { 
+            event_category: 'engagement',
+            event_label: user.login 
+        });
+    }
+
     setIsGenerating(true);
     
     try {
@@ -21,7 +30,7 @@ export const ShareableCard: React.FC<ShareableCardProps> = ({ user, profile }) =
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#0f172a', // Match slate-900
+        backgroundColor: '#020617', // Match Slate 950
         scale: 2, // Retina quality
         useCORS: true, // Allow loading cross-origin images (avatar)
         logging: false,
@@ -41,50 +50,44 @@ export const ShareableCard: React.FC<ShareableCardProps> = ({ user, profile }) =
 
   // Get top 3 skills for the card
   const topSkills = profile.skills.slice(0, 3);
-  const topLang = profile.topLanguages[0]?.name || 'Code';
-
+  
   return (
     <div className="flex flex-col items-center gap-6 mt-12 mb-12 w-full">
       
-      <div className="flex items-center gap-2 text-slate-400 text-sm uppercase tracking-wider font-medium">
+      <div className="flex items-center gap-2 text-slate-500 text-sm uppercase tracking-wider font-bold">
         <Share2 className="w-4 h-4" />
         <span>Share Your 2025 Era</span>
       </div>
 
-      {/* The Card Container */}
-      <div className="relative group perspective-1000">
+      {/* The Card Container - Flat Design */}
+      <div className="relative group">
           <div 
             ref={cardRef}
-            className="w-[400px] h-[500px] bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-700/50 rounded-2xl p-8 flex flex-col relative overflow-hidden shadow-2xl"
+            className="w-[400px] h-[500px] bg-slate-900 border border-slate-700 rounded-none p-8 flex flex-col relative overflow-hidden"
           >
-            {/* Background Decor */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[60px] -mr-16 -mt-16 pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[60px] -ml-16 -mb-16 pointer-events-none"></div>
-            
             {/* 2025 Badge */}
             <div className="absolute top-6 right-6 flex flex-col items-end">
-                <span className="text-4xl font-extrabold text-white/10 select-none">2025</span>
-                <span className="text-xs text-blue-400 font-bold uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">Recap</span>
+                <span className="text-4xl font-extrabold text-slate-800 select-none">2025</span>
             </div>
 
             {/* User Info */}
             <div className="mt-8 flex flex-col items-center text-center z-10">
-                <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-500 to-teal-400 mb-4 shadow-lg">
+                <div className="w-24 h-24 rounded-full bg-slate-800 mb-4">
                     <img 
                         src={user.avatar_url} 
                         alt="Profile" 
-                        className="w-full h-full rounded-full object-cover border-4 border-slate-900 bg-slate-800"
+                        className="w-full h-full rounded-full object-cover border-2 border-slate-700 bg-slate-800"
                         crossOrigin="anonymous" 
                     />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-1">{user.name || user.login}</h2>
-                <p className="text-slate-400 text-sm">@{user.login}</p>
+                <p className="text-slate-500 text-sm font-mono">@{user.login}</p>
             </div>
 
             {/* Archetype */}
             <div className="mt-6 text-center z-10 flex-grow flex flex-col justify-center">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">My 2025 Vibe</div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-teal-400 bg-clip-text text-transparent px-4 leading-tight">
+                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3 font-bold">My 2025 Vibe</div>
+                <div className="text-3xl font-black text-white px-4 leading-tight">
                     {profile.archetype}
                 </div>
             </div>
@@ -92,20 +95,19 @@ export const ShareableCard: React.FC<ShareableCardProps> = ({ user, profile }) =
             {/* Stats/Skills Footer */}
             <div className="mt-auto pt-6 border-t border-slate-800 z-10">
                  <div className="flex justify-between items-end">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-xs text-slate-500">Top Tech</span>
+                    <div className="flex flex-col gap-2">
+                        <span className="text-xs text-slate-500 font-bold uppercase">Top Tech</span>
                         <div className="flex gap-2">
                             {topSkills.map(s => (
-                                <span key={s.name} className="w-2 h-2 rounded-full bg-blue-500" title={s.name}></span>
+                                <span key={s.name} className="px-2 py-1 bg-slate-800 text-slate-300 text-xs font-mono rounded-sm border border-slate-700">
+                                  {s.name}
+                                </span>
                             ))}
-                            <span className="text-xs text-slate-300 font-mono">
-                                {topSkills.map(s => s.name).join(' • ')}
-                            </span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-1.5 opacity-50">
+                    <div className="flex items-center gap-1.5 opacity-60">
                         <Github className="w-4 h-4 text-white" />
-                        <span className="text-[10px] text-white font-medium">GitGraph 2025</span>
+                        <span className="text-xs text-white font-bold tracking-tight">GitGraph</span>
                     </div>
                  </div>
             </div>
@@ -115,7 +117,7 @@ export const ShareableCard: React.FC<ShareableCardProps> = ({ user, profile }) =
       <button 
         onClick={handleDownload}
         disabled={isGenerating}
-        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-blue-500/10 border border-slate-700"
+        className="flex items-center gap-2 bg-white hover:bg-slate-200 text-slate-900 px-6 py-3 rounded font-bold transition-all shadow-none border border-transparent"
       >
         {isGenerating ? (
             <span className="animate-pulse">Capturing...</span>

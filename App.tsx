@@ -6,6 +6,12 @@ import { analyzeProfileWithGemini } from './services/geminiService';
 import { GitHubUser, DeveloperProfile, AppState } from './types';
 import { Sparkles, Terminal } from 'lucide-react';
 
+declare global {
+    interface Window {
+        gtag: (...args: any[]) => void;
+    }
+}
+
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('IDLE');
   const [userData, setUserData] = useState<GitHubUser | null>(null);
@@ -15,6 +21,10 @@ const App: React.FC = () => {
 
   const handleSearch = async (username: string) => {
     try {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'search_start', { search_term: username });
+      }
+
       setAppState('LOADING');
       setErrorMsg(null);
       setUserData(null);
@@ -46,28 +56,42 @@ const App: React.FC = () => {
       ]);
 
       setProfileData(profile);
+      
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'analysis_complete', { 
+            search_term: username, 
+            archetype: profile.archetype 
+        });
+      }
 
       setAppState('SUCCESS');
     } catch (error: any) {
       console.error(error);
       setErrorMsg(error.message || 'Something went wrong.');
       setAppState('ERROR');
+      
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'analysis_error', { 
+            search_term: username,
+            error_message: error.message 
+        });
+      }
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200">
       
       {/* Navigation / Header */}
-      <header className="w-full border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+      <header className="w-full border-b border-slate-800 bg-slate-950 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-blue-500">
+          <div className="flex items-center gap-2 text-white">
             <Terminal className="w-6 h-6" />
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
-              GitGraph 2025
+            <span className="text-xl font-bold tracking-tight">
+              GitGraph
             </span>
           </div>
-          <div className="text-xs text-slate-500 hidden sm:block">
+          <div className="text-xs text-slate-500 hidden sm:block font-mono">
             Powered by Gemini 2.5 Flash
           </div>
         </div>
@@ -78,13 +102,13 @@ const App: React.FC = () => {
         {/* Hero Section */}
         {appState === 'IDLE' && (
            <div className="text-center max-w-2xl mx-auto mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium mb-6 border border-blue-500/20">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 text-blue-400 text-sm font-medium mb-6 border border-slate-800">
                 <Sparkles className="w-4 h-4" />
                 <span>2025 Recap Engine</span>
              </div>
              <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
                Your 2025 <br/>
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-teal-400 to-green-500">
+               <span className="text-blue-500">
                  Year in Code
                </span>
              </h1>
@@ -94,7 +118,7 @@ const App: React.FC = () => {
            </div>
         )}
 
-        {/* Input Section - Always visible unless Success/Loading takes over full screen, but let's keep it sticky or central */}
+        {/* Input Section */}
         <div className={`transition-all duration-500 ${appState === 'SUCCESS' ? 'mb-12' : 'mb-0'}`}>
              {appState !== 'SUCCESS' && <SearchInput onSearch={handleSearch} isLoading={appState === 'LOADING'} />}
         </div>
@@ -104,20 +128,20 @@ const App: React.FC = () => {
           <div className="mt-12 flex flex-col items-center justify-center text-slate-400 animate-in fade-in duration-500">
              <div className="relative w-16 h-16 mb-6">
                 <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 border-4 border-t-white border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
              </div>
-             <p className="text-lg font-medium text-slate-300 animate-pulse">{loadingStep}</p>
+             <p className="text-lg font-medium text-slate-300 animate-pulse font-mono">{loadingStep}</p>
           </div>
         )}
 
         {/* Error State */}
         {appState === 'ERROR' && (
-          <div className="mt-8 bg-red-500/10 border border-red-500/50 rounded-lg p-6 max-w-md text-center text-red-200 animate-in zoom-in-95 duration-300">
+          <div className="mt-8 bg-red-950 border border-red-900 rounded p-6 max-w-md text-center text-red-200 animate-in zoom-in-95 duration-300">
             <p className="font-semibold mb-2">Analysis Failed</p>
             <p className="text-sm opacity-80">{errorMsg}</p>
             <button 
                 onClick={() => setAppState('IDLE')}
-                className="mt-4 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded text-sm transition-colors"
+                className="mt-4 px-4 py-2 bg-red-900 hover:bg-red-800 rounded text-sm transition-colors"
             >
                 Try Again
             </button>
@@ -142,8 +166,10 @@ const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-slate-800 py-8 text-center text-slate-600 text-sm">
-        <p>© {new Date().getFullYear()} GitGraph 2025. Not affiliated with GitHub.</p>
+      <footer className="w-full border-t border-slate-800 py-8 text-center text-slate-500 text-sm">
+        <p>
+            Vibecoded with Google AI Studio by <a href="https://x.com/harishkotra" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-white underline decoration-slate-600 hover:decoration-white underline-offset-4 transition-all">Harish</a>
+        </p>
       </footer>
     </div>
   );
