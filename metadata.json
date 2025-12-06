@@ -1,0 +1,5 @@
+{
+  "name": "GitGraph AI",
+  "description": "Visualize your GitHub developer profile with AI-powered insights into your languages, frameworks, and tools.",
+  "requestFramePermissions": []
+}
