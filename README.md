@@ -12,6 +12,7 @@
     -   **Language Focus Pie Chart**: Distribution of primary languages.
 -   **Shareable Card**: Generates a downloadable PNG card for Twitter/LinkedIn.
 -   **Flat Aesthetic**: Clean, dark-mode design using Tailwind CSS.
+-   **Vercel Analytics**: Built-in tracking for production metrics.
 
 ## Usage
 
@@ -20,6 +21,25 @@
 3.  Click **Analyze**.
 4.  Wait for the AI to process your public repositories.
 5.  View your dashboard and download your shareable card.
+
+## Deployment on Vercel
+
+This project is designed to be easily deployed on Vercel.
+
+### Prerequisites
+-   A Vercel Account
+-   A Google Gemini API Key from Google AI Studio.
+
+### Steps
+1.  Push this code to a GitHub repository.
+2.  Import the repository into Vercel.
+3.  **Crucial Step**: In the Vercel "Configure Project" screen, go to **Environment Variables**.
+4.  Add a new variable:
+    -   **Key**: `API_KEY`
+    -   **Value**: *Your Google Gemini API Key*
+5.  Deploy.
+
+*Note: If you are seeing a blank page in production, ensure your project is built correctly. If using the provided simple HTML structure, Vercel generally serves it as a static site. Ensure you haven't removed the script tags.*
 
 ## Development
 
