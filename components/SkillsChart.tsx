@@ -38,12 +38,12 @@ export const SkillsChart: React.FC<SkillsChartProps> = ({ skills, topLanguages }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full mt-8">
       {/* Bar Chart: Proficiency / Usage Score */}
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 min-w-0">
         <h3 className="text-xl font-bold mb-6 text-white flex items-center">
           <span className="w-1 h-6 bg-blue-500 mr-3"></span>
           Top Tech Stack
         </h3>
-        <div className="h-[350px] w-full">
+        <div className="h-[350px] w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={topSkills}
@@ -71,12 +71,12 @@ export const SkillsChart: React.FC<SkillsChartProps> = ({ skills, topLanguages }
       </div>
 
       {/* Pie Chart: Language Distribution */}
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 min-w-0">
         <h3 className="text-xl font-bold mb-6 text-white flex items-center">
           <span className="w-1 h-6 bg-purple-500 mr-3"></span>
           Language Focus
         </h3>
-        <div className="h-[350px] w-full relative">
+        <div className="h-[350px] w-full min-w-0 relative">
             <ResponsiveContainer width="100%" height="100%">
             <PieChart>
                 <Pie
