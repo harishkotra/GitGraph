@@ -5,6 +5,7 @@ import { fetchGitHubUser, fetchUserRepos } from './services/githubService';
 import { analyzeProfileWithGemini } from './services/geminiService';
 import { GitHubUser, DeveloperProfile, AppState } from './types';
 import { Sparkles, Terminal } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 
 declare global {
     interface Window {
@@ -81,6 +82,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200">
+      <Analytics />
       
       {/* Navigation / Header */}
       <header className="w-full border-b border-slate-800 bg-slate-950 sticky top-0 z-50">
