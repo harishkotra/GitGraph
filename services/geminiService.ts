@@ -1,19 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { DeveloperProfile, GitHubRepo, SkillCategory } from '../types';
 
-const getAiClient = () => {
-    if (!process.env.API_KEY) {
-        throw new Error("API Key not found in environment variables");
-    }
-    return new GoogleGenAI({ apiKey: process.env.API_KEY });
-};
-
 export const analyzeProfileWithGemini = async (
   username: string,
   repos: GitHubRepo[]
 ): Promise<DeveloperProfile> => {
-  const ai = getAiClient();
-
+  
   // FILTER: Only keep repos updated in 2025
   const repos2025 = repos.filter(r => r.updated_at.startsWith('2025'));
 
@@ -32,6 +24,39 @@ export const analyzeProfileWithGemini = async (
     u: r.updated_at
   }));
 
+  // HYBRID MODE: 
+  // If API_KEY is present (Local Dev), use Client-side SDK. 
+  // If missing (Vercel Production), use Serverless API route to protect key.
+  
+  if (!process.env.API_KEY) {
+      // Server-side path (Vercel)
+      try {
+        const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username,
+                repoSummary
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || `Server Error: ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (err: any) {
+          console.error("API Route Error:", err);
+          throw new Error(err.message || "Failed to contact analysis server");
+      }
+  }
+
+  // Client-side path (Local Dev with .env)
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
   const systemInstruction = `
     You are an expert developer profiler creating a "2025 Year in Code" recap. 
     Your task is to analyze a user's GitHub repository list specifically for their work in 2025.
