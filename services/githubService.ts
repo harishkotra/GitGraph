@@ -1,30 +1,29 @@
 import { GitHubRepo, GitHubUser } from '../types';
 
-const BASE_URL = 'https://api.github.com';
-
 // Helper to handle API errors
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('User not found');
+    // Try to parse error json from our API
+    let errorMessage = `API Error: ${response.statusText}`;
+    try {
+        const errorData = await response.json();
+        if (errorData.error) errorMessage = errorData.error;
+    } catch (e) {
+        // ignore json parse error
     }
-    if (response.status === 403) {
-      throw new Error('GitHub API rate limit exceeded. Please try again later.');
-    }
-    throw new Error(`GitHub API Error: ${response.statusText}`);
+
+    throw new Error(errorMessage);
   }
   return response.json();
 }
 
 export const fetchGitHubUser = async (username: string): Promise<GitHubUser> => {
-  const response = await fetch(`${BASE_URL}/users/${username}`);
+  // Use local API proxy to hide tokens and avoid rate limits
+  const response = await fetch(`/api/github?username=${username}&endpoint=user`);
   return handleResponse<GitHubUser>(response);
 };
 
 export const fetchUserRepos = async (username: string): Promise<GitHubRepo[]> => {
-  // We fetch up to 100 most recently updated repos to get a good snapshot of current skills
-  const response = await fetch(
-    `${BASE_URL}/users/${username}/repos?sort=updated&per_page=100&type=owner`
-  );
+  const response = await fetch(`/api/github?username=${username}&endpoint=repos`);
   return handleResponse<GitHubRepo[]>(response);
 };

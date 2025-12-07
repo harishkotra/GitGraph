@@ -13,14 +13,15 @@ export const analyzeProfileWithGemini = async (
       throw new Error("No activity found in 2025. This analysis only tracks work done this year.");
   }
 
-  // Limit to top 50 recently updated repos to keep payload manageable and relevant
-  // Truncate descriptions to save tokens
-  const slicedRepos = repos2025.slice(0, 50);
+  // OPTIMIZATION: Reduce from 50 to 30 to prevent Vercel 504 Timeouts
+  // A smaller prompt processes faster.
+  const slicedRepos = repos2025.slice(0, 30);
+  
   const repoSummary = slicedRepos.map(r => ({
     n: r.name,
-    d: r.description ? r.description.substring(0, 200) : null,
+    d: r.description ? r.description.substring(0, 150) : null, // Truncate description further
     l: r.language,
-    t: r.topics ? r.topics.slice(0, 5) : [], // Limit topics
+    t: r.topics ? r.topics.slice(0, 3) : [], // Limit topics further
     u: r.updated_at
   }));
 
@@ -43,8 +44,17 @@ export const analyzeProfileWithGemini = async (
         });
 
         if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error || `Server Error: ${response.status}`);
+            let errorMsg = `Server Error: ${response.status}`;
+            try {
+                const errData = await response.json();
+                if (errData.error) errorMsg = errData.error;
+            } catch { 
+                // If JSON parse fails, it might be a 504 HTML page
+                if (response.status === 504) {
+                    errorMsg = "Analysis timed out. Try fewer repositories or try again later.";
+                }
+            }
+            throw new Error(errorMsg);
         }
 
         return await response.json();
@@ -58,16 +68,14 @@ export const analyzeProfileWithGemini = async (
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const systemInstruction = `
-    You are an expert developer profiler creating a "2025 Year in Code" recap. 
-    Your task is to analyze a user's GitHub repository list specifically for their work in 2025.
+    Analyze this GitHub user's 2025 activity.
+    1. Identify skills (Languages, Frameworks, Tools) used in 2025.
+    2. Assign usageScore (0-100).
+    3. Create a fun "Archetype" name.
+    4. Write a brief 2-sentence summary.
+    5. Calculate top language % by usage.
     
-    1. Infer skills (Languages, Frameworks, Tools, Databases, Platforms) strictly from the provided 2025 data.
-    2. Calculate a "usageScore" (0-100) for each skill based on frequency in 2025.
-    3. Determine the "2025 Vibe/Archetype" (e.g., "Shipping Velocity Specialist", "AI Tinkerer 2025", "frontend-2025-final-final").
-    4. Write a 2-sentence summary of their 2025 coding journey.
-    5. Calculate top language percentages for 2025.
-    
-    Strictly adhere to the JSON response schema.
+    Return ONLY JSON matching the schema.
   `;
 
   const userPrompt = `Generate a 2025 Developer Recap for user "${username}" based on these repositories:\n\n${JSON.stringify(repoSummary)}`;

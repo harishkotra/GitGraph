@@ -27,19 +27,18 @@
 This project is designed to be easily deployed on Vercel.
 
 ### Prerequisites
--   A Vercel Account
+-   A Vercel Account.
 -   A Google Gemini API Key from Google AI Studio.
+-   (Optional but Recommended) A GitHub Personal Access Token for higher rate limits.
 
 ### Steps
 1.  Push this code to a GitHub repository.
 2.  Import the repository into Vercel.
 3.  **Crucial Step**: In the Vercel "Configure Project" screen, go to **Environment Variables**.
-4.  Add a new variable:
-    -   **Key**: `API_KEY`
-    -   **Value**: *Your Google Gemini API Key*
+4.  Add the following variables:
+    -   **`API_KEY`**: *Your Google Gemini API Key*
+    -   **`GITHUB_TOKEN`**: *Your GitHub Personal Access Token (Classic)* with `public_repo` scope. This prevents rate limit errors.
 5.  Deploy.
-
-*Note: If you are seeing a blank page in production, ensure your project is built correctly. If using the provided simple HTML structure, Vercel generally serves it as a static site. Ensure you haven't removed the script tags.*
 
 ## Development
 

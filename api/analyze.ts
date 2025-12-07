@@ -4,7 +4,7 @@ export const config = {
   runtime: 'edge',
 };
 
-// Define the Schema Enum values manually to ensure standalone execution
+// Define the Schema Enum values manually
 const SkillCategory = {
   LANGUAGE: 'Language',
   FRAMEWORK: 'Framework',
@@ -35,20 +35,24 @@ export default async function handler(request: Request) {
 
     const ai = new GoogleGenAI({ apiKey });
 
+    // Optimization: The prompt is shorter and more direct to ensure speed
     const systemInstruction = `
-      You are an expert developer profiler creating a "2025 Year in Code" recap. 
-      Your task is to analyze a user's GitHub repository list specifically for their work in 2025.
+      Analyze this GitHub user's 2025 activity.
+      1. Identify skills (Languages, Frameworks, Tools) used in 2025.
+      2. Assign usageScore (0-100).
+      3. Create a fun "Archetype" name.
+      4. Write a brief 2-sentence summary.
+      5. Calculate top language % by usage.
       
-      1. Infer skills (Languages, Frameworks, Tools, Databases, Platforms) strictly from the provided 2025 data.
-      2. Calculate a "usageScore" (0-100) for each skill based on frequency in 2025.
-      3. Determine the "2025 Vibe/Archetype" (e.g., "Shipping Velocity Specialist", "AI Tinkerer 2025", "frontend-2025-final-final").
-      4. Write a 2-sentence summary of their 2025 coding journey.
-      5. Calculate top language percentages for 2025.
-      
-      Strictly adhere to the JSON response schema.
+      Return ONLY JSON matching the schema.
     `;
 
-    const userPrompt = `Generate a 2025 Developer Recap for user "${username}" based on these repositories:\n\n${JSON.stringify(repoSummary)}`;
+    // Limit the payload context window to prevent processing timeouts
+    // We expect the client to have already sliced, but we double-check here
+    // A smaller prompt yields a faster response.
+    const limitedSummary = Array.isArray(repoSummary) ? repoSummary.slice(0, 30) : [];
+    
+    const userPrompt = `User: ${username}. Repos: ${JSON.stringify(limitedSummary)}`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -107,7 +111,6 @@ export default async function handler(request: Request) {
     // Parse and return the JSON
     const data = JSON.parse(responseText);
     
-    // Sort logic to ensure high quality output
     if (data.skills) {
         data.skills.sort((a: any, b: any) => b.usageScore - a.usageScore);
     }
@@ -119,6 +122,7 @@ export default async function handler(request: Request) {
 
   } catch (error: any) {
     console.error("Server Analysis Error:", error);
+    // Return a 500 but as JSON so the client can read it
     return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
